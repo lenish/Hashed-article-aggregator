@@ -142,10 +142,10 @@ function HomePage() {
     <>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          한국 의료 뉴스
+          Hashed 뉴스 모니터링
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          매일 업데이트되는 최신 의료 관련 뉴스를 확인하세요
+          해시드 관련 뉴스를 실시간으로 수집하고 리스크를 모니터링합니다
         </Typography>
       </Box>
 

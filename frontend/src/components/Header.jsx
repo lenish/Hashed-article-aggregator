@@ -1,25 +1,25 @@
 import React from 'react'
 import { AppBar, Toolbar, Typography, Box } from '@mui/material'
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital'
+import ShieldIcon from '@mui/icons-material/Shield'
 import { useNavigate } from 'react-router-dom'
 
 function Header() {
   const navigate = useNavigate()
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ backgroundColor: '#1a1a2e' }}>
       <Toolbar>
-        <LocalHospitalIcon sx={{ mr: 2 }} />
+        <ShieldIcon sx={{ mr: 2 }} />
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1, cursor: 'pointer' }}
+          sx={{ flexGrow: 1, cursor: 'pointer', fontWeight: 'bold' }}
           onClick={() => navigate('/')}
         >
-          의료 뉴스 애그리게이터
+          Hashed Risk Manager
         </Typography>
-        <Typography variant="body2">
-          매일 업데이트되는 한국 의료 뉴스
+        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          해시드 관련 뉴스 모니터링
         </Typography>
       </Toolbar>
     </AppBar>
