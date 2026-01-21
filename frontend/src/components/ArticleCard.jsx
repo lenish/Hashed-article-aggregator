@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import WarningIcon from '@mui/icons-material/Warning'
 
 function ArticleCard({ article }) {
   const formatDate = (dateString) => {
@@ -23,16 +24,54 @@ function ArticleCard({ article }) {
     }
   }
 
+  const getSentimentColor = (sentiment) => {
+    switch (sentiment) {
+      case 'positive':
+        return 'success'
+      case 'negative':
+        return 'error'
+      default:
+        return 'default'
+    }
+  }
+
+  const getSentimentLabel = (sentiment) => {
+    switch (sentiment) {
+      case 'positive':
+        return '긍정'
+      case 'negative':
+        return '부정'
+      default:
+        return '중립'
+    }
+  }
+
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardContent sx={{ flexGrow: 1 }}>
-        <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: 'wrap', gap: 0.5 }}>
           {article.category && (
             <Chip
               label={article.category}
               size="small"
               color="primary"
               variant="outlined"
+            />
+          )}
+          {article.sentiment && (
+            <Chip
+              label={getSentimentLabel(article.sentiment)}
+              size="small"
+              color={getSentimentColor(article.sentiment)}
+            />
+          )}
+          {article.needs_response && (
+            <Chip
+              icon={<WarningIcon />}
+              label="대응 필요"
+              size="small"
+              color="error"
+              variant="filled"
             />
           )}
           {article.confidence_score && (

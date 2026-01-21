@@ -1,309 +1,416 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Grid,
+  Box,
   Typography,
   CircularProgress,
-  Box,
   Alert,
   Pagination,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Stack,
-  TextField,
-  Paper,
-} from '@mui/material'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import SearchIcon from '@mui/icons-material/Search'
-import ClearIcon from '@mui/icons-material/Clear'
-import ArticleCard from '../components/ArticleCard'
-import StatsPanel from '../components/StatsPanel'
-import { getArticles, getCategories, getSources, getStats, collectArticles } from '../services/api'
+  Drawer,
+  useMediaQuery,
+  useTheme,
+  IconButton,
+  Snackbar
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import RiskStatusCards from '../components/RiskStatusCards';
+import FilterSidebar from '../components/FilterSidebar';
+import NewsFeedCard from '../components/NewsFeedCard';
+import AIStrategyPanel from '../components/AIStrategyPanel';
+import RealtimeAlerts from '../components/RealtimeAlerts';
+import TeamWorkflow from '../components/TeamWorkflow';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  getArticles,
+  getCategories,
+  getDashboardStats,
+  getWorkflowStats,
+  updateArticleStatus,
+  updateAssignee,
+  updateActionItems,
+  analyzeArticle,
+  collectArticles
+} from '../services/api';
+
+const DRAWER_WIDTH = 280;
+const RIGHT_PANEL_WIDTH = 320;
 
 function HomePage() {
-  const [articles, setArticles] = useState([])
-  const [categories, setCategories] = useState([])
-  const [sources, setSources] = useState([])
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [collecting, setCollecting] = useState(false)
-  const [error, setError] = useState(null)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedSource, setSelectedSource] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user } = useAuth();
 
-  const fetchData = async () => {
+  // State
+  const [articles, setArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [workflowStats, setWorkflowStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+
+  // Filters
+  const [filters, setFilters] = useState({
+    keyword: '',
+    category: '',
+    risk_level: '',
+    status: '',
+    date_from: '',
+    date_to: '',
+    exclude_resolved: true
+  });
+
+  // Realtime alerts (mocked for now, will be from API/WebSocket)
+  const [alerts, setAlerts] = useState([]);
+
+  // Fetch articles
+  const fetchArticles = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       const params = {
         page,
-        per_page: 12,
-      }
+        per_page: 15,
+        ...Object.fromEntries(
+          Object.entries(filters).filter(([_, v]) => v !== '' && v !== false)
+        )
+      };
 
-      if (selectedCategory) {
-        params.category = selectedCategory
-      }
-
-      if (selectedSource) {
-        params.source = selectedSource
-      }
-
-      if (dateFrom) {
-        params.date_from = dateFrom
-      }
-
-      if (dateTo) {
-        params.date_to = dateTo
-      }
-
-      if (searchKeyword) {
-        params.keyword = searchKeyword
-      }
-
-      const [articlesData, categoriesData, sourcesData, statsData] = await Promise.all([
-        getArticles(params),
-        getCategories(),
-        getSources(),
-        getStats(),
-      ])
-
-      setArticles(articlesData.articles)
-      setTotalPages(articlesData.total_pages)
-      setCategories(categoriesData.categories)
-      setSources(sourcesData.sources)
-      setStats(statsData)
+      const response = await getArticles(params);
+      setArticles(response.articles || []);
+      setTotalPages(response.total_pages || 1);
     } catch (err) {
-      setError('데이터를 불러오는 중 오류가 발생했습니다.')
-      console.error(err)
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [page, filters]);
 
-  const handleCollect = async () => {
+  // Fetch dashboard stats
+  const fetchStats = useCallback(async () => {
     try {
-      setCollecting(true)
-      const result = await collectArticles()
-      alert(`기사 수집 완료!\n수집: ${result.collected}개\n저장: ${result.saved}개`)
-      fetchData()
+      const [dashStats, workStats, categoriesData] = await Promise.all([
+        getDashboardStats(),
+        getWorkflowStats(),
+        getCategories()
+      ]);
+      setDashboardStats(dashStats);
+      setWorkflowStats(workStats);
+      setCategories(categoriesData.categories || []);
+
+      // Create alerts from critical articles
+      if (dashStats?.risk_levels?.red > 0) {
+        setAlerts(prev => {
+          const newAlert = {
+            id: Date.now(),
+            title: `심각 리스크 기사 ${dashStats.risk_levels.red}건 발견`,
+            risk_level: 'red',
+            created_at: new Date().toISOString(),
+            read: false
+          };
+          return [newAlert, ...prev.slice(0, 9)];
+        });
+      }
     } catch (err) {
-      console.error(err)
-      const errorMessage = err.response?.data?.error || '기사 수집 중 오류가 발생했습니다.'
-      const errorDetails = err.response?.data?.message || ''
-      const errorDocs = err.response?.data?.docs || ''
-
-      let fullMessage = errorMessage
-      if (errorDetails) fullMessage += '\n\n' + errorDetails
-      if (errorDocs) fullMessage += '\n\n' + errorDocs
-
-      alert(fullMessage)
-    } finally {
-      setCollecting(false)
+      console.error('Stats fetch error:', err);
     }
-  }
+  }, []);
 
-  const handleSearch = () => {
-    setSearchKeyword(keyword)
-    setPage(1)
-  }
-
-  const handleClearFilters = () => {
-    setSelectedCategory('')
-    setSelectedSource('')
-    setDateFrom('')
-    setDateTo('')
-    setKeyword('')
-    setSearchKeyword('')
-    setPage(1)
-  }
+  // Initial load
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   useEffect(() => {
-    fetchData()
-  }, [page, selectedCategory, selectedSource, dateFrom, dateTo, searchKeyword])
+    fetchStats();
+    // Refresh stats every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
 
-  if (loading && articles.length === 0) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
-      </Box>
-    )
-  }
+  // Handlers
+  const handleSearch = () => {
+    setPage(1);
+    fetchArticles();
+  };
 
+  const handleClearFilters = () => {
+    setFilters({
+      keyword: '',
+      category: '',
+      risk_level: '',
+      status: '',
+      date_from: '',
+      date_to: '',
+      exclude_resolved: true
+    });
+    setPage(1);
+  };
+
+  const handleCardClick = (riskLevel) => {
+    if (riskLevel === 'green') {
+      setFilters(prev => ({ ...prev, status: 'resolved', risk_level: '' }));
+    } else {
+      setFilters(prev => ({ ...prev, risk_level: riskLevel, status: '' }));
+    }
+    setPage(1);
+  };
+
+  const handleViewStrategy = (article) => {
+    setSelectedArticle(article);
+  };
+
+  const handleStatusChange = async (articleId, newStatus) => {
+    try {
+      await updateArticleStatus(articleId, newStatus);
+      setSnackbar({ open: true, message: '상태가 변경되었습니다.', severity: 'success' });
+      fetchArticles();
+      fetchStats();
+      if (selectedArticle?.id === articleId) {
+        setSelectedArticle(prev => ({ ...prev, status: newStatus }));
+      }
+    } catch (err) {
+      setSnackbar({ open: true, message: '상태 변경에 실패했습니다.', severity: 'error' });
+    }
+  };
+
+  const handleAssign = async (article) => {
+    // For now, auto-assign to current user
+    try {
+      await updateAssignee(article.id, user?.id);
+      setSnackbar({ open: true, message: '담당자가 지정되었습니다.', severity: 'success' });
+      fetchArticles();
+      fetchStats();
+    } catch (err) {
+      setSnackbar({ open: true, message: '담당자 지정에 실패했습니다.', severity: 'error' });
+    }
+  };
+
+  const handleActionItemToggle = async (articleId, itemIndex) => {
+    const article = articles.find(a => a.id === articleId) || selectedArticle;
+    if (!article?.action_items) return;
+
+    const updatedItems = article.action_items.map((item, idx) =>
+      idx === itemIndex ? { ...item, checked: !item.checked } : item
+    );
+
+    try {
+      await updateActionItems(articleId, updatedItems);
+      if (selectedArticle?.id === articleId) {
+        setSelectedArticle(prev => ({ ...prev, action_items: updatedItems }));
+      }
+    } catch (err) {
+      console.error('Action item toggle error:', err);
+    }
+  };
+
+  const handleAIAnalyze = async () => {
+    if (!selectedArticle) {
+      setSnackbar({ open: true, message: '분석할 기사를 선택하세요.', severity: 'warning' });
+      return;
+    }
+
+    try {
+      setIsAnalyzing(true);
+      const result = await analyzeArticle(selectedArticle.id);
+      setSelectedArticle(result.article);
+      setSnackbar({ open: true, message: 'AI 분석이 완료되었습니다.', severity: 'success' });
+      fetchArticles();
+    } catch (err) {
+      setSnackbar({ open: true, message: 'AI 분석에 실패했습니다.', severity: 'error' });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleShare = (article) => {
+    navigator.clipboard.writeText(article.url);
+    setSnackbar({ open: true, message: '링크가 클립보드에 복사되었습니다.', severity: 'info' });
+  };
+
+  const handleAlertClick = (alert) => {
+    setFilters(prev => ({ ...prev, risk_level: alert.risk_level }));
+    setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, read: true } : a));
+  };
+
+  // Render
   return (
-    <>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Hashed 뉴스 모니터링
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          해시드 관련 뉴스를 실시간으로 수집하고 리스크를 모니터링합니다
-        </Typography>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+      {/* Left Sidebar - Filters (Desktop) */}
+      {!isMobile && (
+        <Box
+          sx={{
+            width: DRAWER_WIDTH,
+            flexShrink: 0,
+            p: 2,
+            borderRight: '1px solid #e0e0e0',
+            overflow: 'auto'
+          }}
+        >
+          <FilterSidebar
+            filters={filters}
+            onFilterChange={setFilters}
+            onSearch={handleSearch}
+            onClear={handleClearFilters}
+            onAIAnalyze={handleAIAnalyze}
+            categories={categories}
+            isAnalyzing={isAnalyzing}
+          />
+        </Box>
+      )}
+
+      {/* Mobile Filter Drawer */}
+      <Drawer
+        anchor="left"
+        open={mobileFilterOpen}
+        onClose={() => setMobileFilterOpen(false)}
+        sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, p: 2 } }}
+      >
+        <FilterSidebar
+          filters={filters}
+          onFilterChange={setFilters}
+          onSearch={() => { handleSearch(); setMobileFilterOpen(false); }}
+          onClear={handleClearFilters}
+          onAIAnalyze={handleAIAnalyze}
+          categories={categories}
+          isAnalyzing={isAnalyzing}
+        />
+      </Drawer>
+
+      {/* Main Content */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Header */}
+        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            {isMobile && (
+              <IconButton onClick={() => setMobileFilterOpen(true)} sx={{ mr: 1 }}>
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Typography variant="h5" fontWeight={700}>
+              AI 리스크 모니터링 & 대응
+            </Typography>
+          </Box>
+
+          {/* Status Cards */}
+          <RiskStatusCards stats={dashboardStats} onCardClick={handleCardClick} />
+        </Box>
+
+        {/* News Feed */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : articles.length === 0 ? (
+            <Alert severity="info">표시할 기사가 없습니다.</Alert>
+          ) : (
+            <>
+              {articles.map((article) => (
+                <NewsFeedCard
+                  key={article.id}
+                  article={article}
+                  selected={selectedArticle?.id === article.id}
+                  onViewStrategy={handleViewStrategy}
+                  onStatusChange={(a) => handleStatusChange(a.id, 'reviewing')}
+                  onShare={handleShare}
+                  onAssign={handleAssign}
+                />
+              ))}
+
+              {totalPages > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 2 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(e, value) => setPage(value)}
+                    color="primary"
+                  />
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
       </Box>
 
-      <StatsPanel stats={stats} />
+      {/* Right Panel - AI Strategy + Alerts + Workflow (Desktop) */}
+      {!isMobile && (
+        <Box
+          sx={{
+            width: RIGHT_PANEL_WIDTH,
+            flexShrink: 0,
+            borderLeft: '1px solid #e0e0e0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
+          {/* AI Strategy Panel */}
+          <Box sx={{ flex: 1, p: 2, overflow: 'auto', minHeight: '40%' }}>
+            <AIStrategyPanel
+              article={selectedArticle}
+              onClose={() => setSelectedArticle(null)}
+              onActionItemToggle={handleActionItemToggle}
+              onStatusChange={handleStatusChange}
+              isAnalyzing={isAnalyzing}
+            />
+          </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
+          {/* Realtime Alerts */}
+          <Box sx={{ height: '30%', p: 2, pt: 0, overflow: 'hidden' }}>
+            <RealtimeAlerts
+              alerts={alerts}
+              onRefresh={fetchStats}
+              onAlertClick={handleAlertClick}
+            />
+          </Box>
+
+          {/* Team Workflow */}
+          <Box sx={{ height: '30%', p: 2, pt: 0, overflow: 'hidden' }}>
+            <TeamWorkflow workflowStats={workflowStats} />
+          </Box>
+        </Box>
       )}
 
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          필터
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>카테고리</InputLabel>
-              <Select
-                value={selectedCategory}
-                label="카테고리"
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value)
-                  setPage(1)
-                }}
-              >
-                <MenuItem value="">전체</MenuItem>
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>언론사</InputLabel>
-              <Select
-                value={selectedSource}
-                label="언론사"
-                onChange={(e) => {
-                  setSelectedSource(e.target.value)
-                  setPage(1)
-                }}
-              >
-                <MenuItem value="">전체</MenuItem>
-                {sources.map((source) => (
-                  <MenuItem key={source} value={source}>
-                    {source}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={2}>
-            <TextField
-              fullWidth
-              label="시작 날짜"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value)
-                setPage(1)
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              label="종료 날짜"
-              type="date"
-              value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value)
-                setPage(1)
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              label="키워드 검색"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch()
-                }
-              }}
-              placeholder="제목, 내용 검색"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant="contained"
-                startIcon={<SearchIcon />}
-                onClick={handleSearch}
-              >
-                검색
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ClearIcon />}
-                onClick={handleClearFilters}
-              >
-                필터 초기화
-              </Button>
-              <Box sx={{ flexGrow: 1 }} />
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={handleCollect}
-                disabled={collecting}
-              >
-                {collecting ? '수집 중...' : '기사 수집'}
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {articles.length === 0 ? (
-        <Alert severity="info">표시할 기사가 없습니다.</Alert>
-      ) : (
-        <>
-          <Grid container spacing={3}>
-            {articles.map((article) => (
-              <Grid item xs={12} sm={6} md={4} key={article.id}>
-                <ArticleCard article={article} />
-              </Grid>
-            ))}
-          </Grid>
-
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, value) => setPage(value)}
-                color="primary"
-              />
-            </Box>
-          )}
-        </>
+      {/* Mobile AI Strategy Drawer */}
+      {isMobile && selectedArticle && (
+        <Drawer
+          anchor="right"
+          open={!!selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          sx={{ '& .MuiDrawer-paper': { width: '100%', maxWidth: 400 } }}
+        >
+          <AIStrategyPanel
+            article={selectedArticle}
+            onClose={() => setSelectedArticle(null)}
+            onActionItemToggle={handleActionItemToggle}
+            onStatusChange={handleStatusChange}
+            isAnalyzing={isAnalyzing}
+          />
+        </Drawer>
       )}
-    </>
-  )
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        message={snackbar.message}
+      />
+    </Box>
+  );
 }
 
-export default HomePage
+export default HomePage;

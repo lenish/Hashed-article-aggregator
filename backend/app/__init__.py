@@ -13,20 +13,22 @@ def create_app(config_name='default'):
     # 확장 초기화
     db.init_app(app)
 
-    # CORS 설정 - 모든 도메인 허용
+    # CORS 설정 - 모든 도메인 허용 (Authorization 헤더 포함)
     CORS(app, resources={
         r"/api/*": {
             "origins": "*",
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type"]
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
         }
     })
 
     # 블루프린트 등록
-    from app.routes import articles, scheduler, sources
+    from app.routes import articles, scheduler, sources, auth, comments
     app.register_blueprint(articles.bp)
     app.register_blueprint(scheduler.bp)
     app.register_blueprint(sources.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(comments.bp)
 
     # 데이터베이스 초기화
     with app.app_context():

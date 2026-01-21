@@ -20,6 +20,24 @@ class ArticleClassifier:
             '기타': []
         }
 
+        # 감성 분석 키워드
+        self.negative_keywords = [
+            '소송', '고소', '피해', '사기', '논란', '문제', '비판', '실패', '손실',
+            '하락', '폭락', '철수', '경고', '위기', '의혹', '수사', '기소', '횡령',
+            '배임', '파산', '부도', '불법', '탈세', '처벌', '제재', '압수수색'
+        ]
+        self.positive_keywords = [
+            '성공', '성장', '상승', '급등', '호재', '협력', '파트너십', '계약',
+            '확장', '진출', '수상', '선정', '인정', '혁신', '돌파', '달성',
+            '흑자', '이익', '수익', '투자유치', '시리즈'
+        ]
+
+        # PR 대응 필요 키워드
+        self.response_keywords = [
+            '해명', '입장', '반박', '대응', '공식', '발표', '설명', '소송', '고소',
+            '피해', '논란', '의혹', '비판', '항의', '시위', '고발', '신고'
+        ]
+
     def classify_article(self, title: str, description: str = "") -> Tuple[bool, str, float, List[str]]:
         """
         기사를 분류하여 관련 여부 판단
@@ -83,6 +101,136 @@ class ArticleClassifier:
         else:
             return '기타'
 
+    def analyze_sentiment(self, title: str, description: str = "") -> str:
+        """
+        기사의 감성을 분석하여 긍정/부정/중립 판단
+
+        Args:
+            title: 기사 제목
+            description: 기사 요약
+
+        Returns:
+            sentiment: 'positive', 'negative', 'neutral'
+        """
+        text = f"{title} {description}".lower()
+
+        # 부정 키워드 카운트 (제목에 있으면 가중치 2배)
+        negative_score = 0
+        for keyword in self.negative_keywords:
+            if keyword in title.lower():
+                negative_score += 2
+            elif keyword in text:
+                negative_score += 1
+
+        # 긍정 키워드 카운트 (제목에 있으면 가중치 2배)
+        positive_score = 0
+        for keyword in self.positive_keywords:
+            if keyword in title.lower():
+                positive_score += 2
+            elif keyword in text:
+                positive_score += 1
+
+        # 감성 판정
+        if negative_score > positive_score and negative_score >= 1:
+            return 'negative'
+        elif positive_score > negative_score and positive_score >= 1:
+            return 'positive'
+        else:
+            return 'neutral'
+
+    def check_needs_response(self, title: str, description: str = "") -> bool:
+        """
+        PR 대응 필요 여부 판단
+
+        Args:
+            title: 기사 제목
+            description: 기사 요약
+
+        Returns:
+            needs_response: True/False
+        """
+        text = f"{title} {description}".lower()
+
+        # 대응 필요 키워드가 있으면 True
+        for keyword in self.response_keywords:
+            if keyword in text:
+                logger.debug(f"PR 대응 필요 키워드 발견: {keyword}")
+                return True
+
+        return False
+
+    def calculate_risk(self, title: str, description: str = "", sentiment: str = None) -> Tuple[str, int]:
+        """
+        리스크 레벨 및 점수 계산
+
+        Args:
+            title: 기사 제목
+            description: 기사 요약
+            sentiment: 사전 분석된 감성 (optional)
+
+        Returns:
+            (risk_level, risk_score)
+            - risk_level: 'red', 'amber', 'green'
+            - risk_score: 0-100
+        """
+        text = f"{title} {description}".lower()
+
+        # 감성 분석 (사전 분석 결과가 없으면 새로 계산)
+        if sentiment is None:
+            sentiment = self.analyze_sentiment(title, description)
+
+        # 고위험 키워드 (제목에 있으면 가중치 3배)
+        high_risk_keywords = [
+            '소송', '고소', '사기', '피해', '검찰', '수사', '횡령', '배임',
+            '경찰', '구속', '체포', '기소', '압수수색', '불법', '범죄'
+        ]
+
+        # 중위험 키워드
+        medium_risk_keywords = [
+            '논란', '의혹', '비판', '우려', '하락', '손실', '규제', '제재',
+            '경고', '위기', '실패', '철수', '폭락', '위반'
+        ]
+
+        risk_score = 0
+
+        # 고위험 키워드 점수 계산
+        for keyword in high_risk_keywords:
+            if keyword in title.lower():
+                risk_score += 25  # 제목에 있으면 25점
+            elif keyword in text:
+                risk_score += 10  # 본문에 있으면 10점
+
+        # 중위험 키워드 점수 계산
+        for keyword in medium_risk_keywords:
+            if keyword in title.lower():
+                risk_score += 15  # 제목에 있으면 15점
+            elif keyword in text:
+                risk_score += 5   # 본문에 있으면 5점
+
+        # 감성에 따른 보정
+        if sentiment == 'negative':
+            risk_score += 15
+        elif sentiment == 'positive':
+            risk_score = max(0, risk_score - 10)
+
+        # PR 대응 필요 시 추가 점수
+        if self.check_needs_response(title, description):
+            risk_score += 10
+
+        # 점수 제한 (0-100)
+        risk_score = min(100, max(0, risk_score))
+
+        # 레벨 결정
+        if risk_score >= 70:
+            risk_level = 'red'
+        elif risk_score >= 40:
+            risk_level = 'amber'
+        else:
+            risk_level = 'green'
+
+        logger.debug(f"리스크 계산 - 레벨: {risk_level}, 점수: {risk_score}")
+        return risk_level, risk_score
+
     def batch_classify(self, articles: List[Dict]) -> List[Dict]:
         """
         여러 기사를 일괄 분류
@@ -105,6 +253,16 @@ class ArticleClassifier:
             article['category'] = category
             article['confidence_score'] = confidence
             article['keywords'] = keywords
+
+            # 감성 분석 및 PR 대응 필요 여부
+            sentiment = self.analyze_sentiment(title, description)
+            article['sentiment'] = sentiment
+            article['needs_response'] = self.check_needs_response(title, description)
+
+            # 리스크 레벨 및 점수 계산
+            risk_level, risk_score = self.calculate_risk(title, description, sentiment)
+            article['risk_level'] = risk_level
+            article['risk_score'] = risk_score
 
             if is_medical:
                 classified_articles.append(article)
