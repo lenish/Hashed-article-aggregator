@@ -49,7 +49,7 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
       >
         <GroupIcon sx={{ color: 'primary.light' }} />
         <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-          팀 워크플로우
+          Team Workflow
         </Typography>
       </Box>
 
@@ -57,10 +57,10 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
       <Box sx={{ px: 2, py: 1.5, bgcolor: 'background.default' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Typography variant="caption" color="text.secondary">
-            전체 진행 중 ({totalTasks}건)
+            In Progress ({totalTasks})
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            미할당: {unassignedCount}건
+            Unassigned: {unassignedCount}
           </Typography>
         </Box>
         <LinearProgress
@@ -91,12 +91,12 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              진행 중인 작업이 없습니다.
+              No tasks in progress.
             </Typography>
           </Box>
         ) : (
           <List dense sx={{ py: 0 }}>
-            {/* 미할당 */}
+            {/* Unassigned */}
             {unassignedCount > 0 && (
               <>
                 <ListItem>
@@ -108,17 +108,17 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                   <ListItemText
                     primary={
                       <Typography variant="body2" fontWeight={500} color="text.primary">
-                        미할당
+                        Unassigned
                       </Typography>
                     }
                     secondary={
                       <Typography variant="caption" color="text.secondary">
-                        담당자 지정 필요
+                        Needs assignment
                       </Typography>
                     }
                   />
                   <Chip
-                    label={`${unassignedCount}건`}
+                    label={unassignedCount}
                     size="small"
                     sx={{
                       fontWeight: 600,
@@ -132,7 +132,7 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
               </>
             )}
 
-            {/* 담당자별 */}
+            {/* By assignee */}
             {byAssignee.map((item, index) => (
               <React.Fragment key={item.user_id}>
                 <ListItem>
@@ -171,7 +171,7 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                     }
                   />
                   <Chip
-                    label={`${item.assigned_count}건`}
+                    label={item.assigned_count}
                     size="small"
                     sx={{
                       fontWeight: 600,

@@ -17,7 +17,6 @@ import WarningIcon from '@mui/icons-material/Warning';
 import InfoIcon from '@mui/icons-material/Info';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
 
 const getAlertIcon = (level) => {
   switch (level) {
@@ -47,7 +46,7 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
   const formatTime = (dateString) => {
     if (!dateString) return '';
     try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: ko });
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch {
       return '';
     }
@@ -82,7 +81,7 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
             <NotificationsActiveIcon sx={{ color: 'primary.light' }} />
           </Badge>
           <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-            실시간 알림
+            Realtime Alerts
           </Typography>
         </Box>
         <IconButton size="small" onClick={onRefresh} sx={{ color: 'text.secondary' }}>
@@ -103,7 +102,7 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
             }}
           >
             <Typography variant="body2" color="text.secondary">
-              새로운 알림이 없습니다.
+              No new alerts.
             </Typography>
           </Box>
         ) : (

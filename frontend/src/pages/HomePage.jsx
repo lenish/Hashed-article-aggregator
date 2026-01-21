@@ -93,7 +93,7 @@ function HomePage() {
       setArticles(response.articles || []);
       setTotalPages(response.total_pages || 1);
     } catch (err) {
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      setError('Error loading data.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -117,7 +117,7 @@ function HomePage() {
         setAlerts(prev => {
           const newAlert = {
             id: Date.now(),
-            title: `심각 리스크 기사 ${dashStats.risk_levels.red}건 발견`,
+            title: `${dashStats.risk_levels.red} critical risk articles found`,
             risk_level: 'red',
             created_at: new Date().toISOString(),
             read: false
@@ -180,13 +180,13 @@ function HomePage() {
   // Fetch new articles from API
   const handleCollectArticles = async () => {
     try {
-      setSnackbar({ open: true, message: '기사 수집을 시작합니다...', severity: 'info' });
+      setSnackbar({ open: true, message: 'Starting article collection...', severity: 'info' });
       await collectArticles();
-      setSnackbar({ open: true, message: '기사 수집이 완료되었습니다.', severity: 'success' });
+      setSnackbar({ open: true, message: 'Article collection completed.', severity: 'success' });
       fetchArticles();
       fetchStats();
     } catch (err) {
-      setSnackbar({ open: true, message: '기사 수집에 실패했습니다.', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to collect articles.', severity: 'error' });
     }
   };
 
@@ -206,14 +206,14 @@ function HomePage() {
   const handleStatusChange = async (articleId, newStatus) => {
     try {
       await updateArticleStatus(articleId, newStatus);
-      setSnackbar({ open: true, message: '상태가 변경되었습니다.', severity: 'success' });
+      setSnackbar({ open: true, message: 'Status updated.', severity: 'success' });
       fetchArticles();
       fetchStats();
       if (selectedArticle?.id === articleId) {
         setSelectedArticle(prev => ({ ...prev, status: newStatus }));
       }
     } catch (err) {
-      setSnackbar({ open: true, message: '상태 변경에 실패했습니다.', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to update status.', severity: 'error' });
     }
   };
 
@@ -221,11 +221,11 @@ function HomePage() {
     // For now, auto-assign to current user
     try {
       await updateAssignee(article.id, user?.id);
-      setSnackbar({ open: true, message: '담당자가 지정되었습니다.', severity: 'success' });
+      setSnackbar({ open: true, message: 'Assignee updated.', severity: 'success' });
       fetchArticles();
       fetchStats();
     } catch (err) {
-      setSnackbar({ open: true, message: '담당자 지정에 실패했습니다.', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to update assignee.', severity: 'error' });
     }
   };
 
@@ -249,7 +249,7 @@ function HomePage() {
 
   const handleAIAnalyze = async () => {
     if (!selectedArticle) {
-      setSnackbar({ open: true, message: '분석할 기사를 선택하세요.', severity: 'warning' });
+      setSnackbar({ open: true, message: 'Please select an article to analyze.', severity: 'warning' });
       return;
     }
 
@@ -257,10 +257,10 @@ function HomePage() {
       setIsAnalyzing(true);
       const result = await analyzeArticle(selectedArticle.id);
       setSelectedArticle(result.article);
-      setSnackbar({ open: true, message: 'AI 분석이 완료되었습니다.', severity: 'success' });
+      setSnackbar({ open: true, message: 'AI analysis completed.', severity: 'success' });
       fetchArticles();
     } catch (err) {
-      setSnackbar({ open: true, message: 'AI 분석에 실패했습니다.', severity: 'error' });
+      setSnackbar({ open: true, message: 'AI analysis failed.', severity: 'error' });
     } finally {
       setIsAnalyzing(false);
     }
@@ -268,7 +268,7 @@ function HomePage() {
 
   const handleShare = (article) => {
     navigator.clipboard.writeText(article.url);
-    setSnackbar({ open: true, message: '링크가 클립보드에 복사되었습니다.', severity: 'info' });
+    setSnackbar({ open: true, message: 'Link copied to clipboard.', severity: 'info' });
   };
 
   const handleAlertClick = (alert) => {
@@ -288,7 +288,7 @@ function HomePage() {
             </IconButton>
           )}
           <Typography variant="h5" fontWeight={700} color="text.primary">
-            AI 리스크 모니터링 & 대응
+            AI Risk Monitoring & Response
           </Typography>
         </Box>
 
@@ -368,7 +368,7 @@ function HomePage() {
           <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
               <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-                AI 대응 뉴스 피드
+                AI News Feed
               </Typography>
               <Button
                 variant="outlined"
@@ -377,7 +377,7 @@ function HomePage() {
                 onClick={handleCollectArticles}
                 sx={{ fontSize: '12px', borderColor: 'divider', color: 'text.secondary' }}
               >
-                기사 수집
+                Collect
               </Button>
             </Box>
 
@@ -389,26 +389,26 @@ function HomePage() {
                   variant={selectedPeriod === 1 ? 'contained' : 'outlined'}
                   sx={{ fontSize: '11px', px: 1.5 }}
                 >
-                  1일
+                  1D
                 </Button>
                 <Button
                   onClick={() => handlePeriodFilter(7)}
                   variant={selectedPeriod === 7 ? 'contained' : 'outlined'}
                   sx={{ fontSize: '11px', px: 1.5 }}
                 >
-                  7일
+                  7D
                 </Button>
                 <Button
                   onClick={() => handlePeriodFilter(30)}
                   variant={selectedPeriod === 30 ? 'contained' : 'outlined'}
                   sx={{ fontSize: '11px', px: 1.5 }}
                 >
-                  30일
+                  30D
                 </Button>
               </ButtonGroup>
               {selectedPeriod && (
                 <Chip
-                  label="초기화"
+                  label="Reset"
                   size="small"
                   onDelete={() => {
                     setFilters(prev => ({ ...prev, date_from: '', date_to: '' }));
@@ -433,7 +433,7 @@ function HomePage() {
                 <CircularProgress />
               </Box>
             ) : articles.length === 0 ? (
-              <Alert severity="info">표시할 기사가 없습니다.</Alert>
+              <Alert severity="info">No articles to display.</Alert>
             ) : (
               <>
                 {articles.map((article) => (

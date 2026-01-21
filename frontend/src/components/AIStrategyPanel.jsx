@@ -55,7 +55,7 @@ const AIStrategyPanel = ({
         }}
       >
         <Typography color="text.secondary">
-          기사를 선택하면 AI 추천 대응 전략이 표시됩니다.
+          Select an article to view AI-recommended response strategy.
         </Typography>
       </Paper>
     );
@@ -108,7 +108,7 @@ const AIStrategyPanel = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AutoAwesomeIcon sx={{ color: '#fff' }} />
           <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600, fontSize: '16px' }}>
-            AI 추천 대응 전략
+            AI Response Strategy
           </Typography>
         </Box>
         <IconButton size="small" onClick={onClose} sx={{ color: '#fff' }}>
@@ -121,11 +121,11 @@ const AIStrategyPanel = ({
         {isAnalyzing ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
             <CircularProgress sx={{ mb: 2, color: 'primary.light' }} />
-            <Typography color="text.secondary">AI 분석 중...</Typography>
+            <Typography color="text.secondary">Analyzing with AI...</Typography>
           </Box>
         ) : (
           <>
-            {/* 리스크 레벨 표시 */}
+            {/* Risk level display */}
             <Box sx={{ mb: 3 }}>
               <Chip
                 label={`Risk Level: ${article.risk_level?.toUpperCase()}`}
@@ -144,10 +144,10 @@ const AIStrategyPanel = ({
               )}
             </Box>
 
-            {/* 핵심 요약 */}
+            {/* Key Summary */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, color: 'text.primary' }}>
-                핵심 요약
+                Key Summary
               </Typography>
               <Box
                 sx={{
@@ -158,17 +158,17 @@ const AIStrategyPanel = ({
                 }}
               >
                 <Typography variant="body2" sx={{ lineHeight: 1.8, color: 'text.secondary' }}>
-                  {article.ai_summary || article.description || '요약 정보가 없습니다. AI 분석을 실행하세요.'}
+                  {article.ai_summary || article.description || 'No summary available. Run AI analysis.'}
                 </Typography>
               </Box>
             </Box>
 
-            {/* 리스크 분석 */}
+            {/* Risk Analysis */}
             {article.ai_risk_analysis && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'text.primary' }}>
                   <WarningAmberIcon sx={{ fontSize: 18, mr: 0.5, color: '#fcd34d' }} />
-                  리스크 분석
+                  Risk Analysis
                 </Typography>
                 <Box sx={{ p: 2, bgcolor: 'rgba(245, 158, 11, 0.1)', borderRadius: 1 }}>
                   <Typography variant="body2" sx={{ lineHeight: 1.8, color: 'text.secondary' }}>
@@ -178,11 +178,11 @@ const AIStrategyPanel = ({
               </Box>
             )}
 
-            {/* 실행 액션 아이템 */}
+            {/* Action Items */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'text.primary' }}>
                 <CheckCircleOutlineIcon sx={{ fontSize: 18, mr: 0.5, color: '#86efac' }} />
-                실행 액션 아이템
+                Action Items
               </Typography>
               {article.action_items && article.action_items.length > 0 ? (
                 <List dense sx={{ bgcolor: 'background.default', borderRadius: 1 }}>
@@ -216,17 +216,17 @@ const AIStrategyPanel = ({
                 </List>
               ) : (
                 <Typography variant="body2" color="text.secondary" sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                  액션 아이템이 없습니다. AI 분석을 실행하세요.
+                  No action items. Run AI analysis.
                 </Typography>
               )}
             </Box>
 
-            {/* 유사 사례 */}
+            {/* Similar Cases */}
             {article.similar_cases && article.similar_cases.length > 0 && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1, display: 'flex', alignItems: 'center', color: 'text.primary' }}>
                   <LinkIcon sx={{ fontSize: 18, mr: 0.5, color: 'primary.light' }} />
-                  유사 사례
+                  Similar Cases
                 </Typography>
                 <List dense sx={{ bgcolor: 'background.default', borderRadius: 1 }}>
                   {article.similar_cases.map((caseItem, index) => (
@@ -246,7 +246,7 @@ const AIStrategyPanel = ({
 
             <Divider sx={{ my: 2, borderColor: 'divider' }} />
 
-            {/* 댓글 섹션 */}
+            {/* Comments Section */}
             <Box>
               <Box
                 sx={{
@@ -259,13 +259,13 @@ const AIStrategyPanel = ({
                 onClick={() => setShowComments(!showComments)}
               >
                 <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                  Comment ({comments.length})
+                  Comments ({comments.length})
                 </Typography>
                 {showComments ? <ExpandLessIcon sx={{ color: 'text.secondary' }} /> : <ExpandMoreIcon sx={{ color: 'text.secondary' }} />}
               </Box>
 
               <Collapse in={showComments}>
-                {/* 댓글 목록 */}
+                {/* Comment list */}
                 {comments.length > 0 ? (
                   <List dense sx={{ mb: 2 }}>
                     {comments.map((comment, index) => (
@@ -296,16 +296,16 @@ const AIStrategyPanel = ({
                   </List>
                 ) : (
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    댓글이 없습니다.
+                    No comments yet.
                   </Typography>
                 )}
 
-                {/* 댓글 입력 */}
+                {/* Comment input */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size="small"
                     fullWidth
-                    placeholder="댓글을 입력하세요..."
+                    placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
@@ -345,7 +345,7 @@ const AIStrategyPanel = ({
               '&.Mui-disabled': { bgcolor: 'rgba(34, 197, 94, 0.3)', color: 'rgba(255,255,255,0.5)' }
             }}
           >
-            대응 완료
+            Mark Resolved
           </Button>
           <Button
             variant="outlined"
@@ -359,7 +359,7 @@ const AIStrategyPanel = ({
               '&:hover': { borderColor: 'text.secondary', bgcolor: 'rgba(255,255,255,0.05)' }
             }}
           >
-            무시
+            Ignore
           </Button>
         </Box>
       </Box>

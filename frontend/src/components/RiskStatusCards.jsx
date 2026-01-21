@@ -8,7 +8,7 @@ const RiskStatusCards = ({ stats, onCardClick }) => {
   const cards = [
     {
       key: 'red',
-      title: '심각 대응 필요',
+      title: 'Critical',
       count: stats?.risk_levels?.red || 0,
       bgColor: 'rgba(239, 68, 68, 0.15)',
       borderColor: '#ef4444',
@@ -17,7 +17,7 @@ const RiskStatusCards = ({ stats, onCardClick }) => {
     },
     {
       key: 'amber',
-      title: '검토 중',
+      title: 'In Review',
       count: stats?.risk_levels?.amber || 0,
       bgColor: 'rgba(245, 158, 11, 0.15)',
       borderColor: '#f59e0b',
@@ -26,7 +26,7 @@ const RiskStatusCards = ({ stats, onCardClick }) => {
     },
     {
       key: 'green',
-      title: '대응 완료',
+      title: 'Resolved',
       count: stats?.status?.resolved || 0,
       bgColor: 'rgba(34, 197, 94, 0.15)',
       borderColor: '#22c55e',
@@ -70,7 +70,7 @@ const RiskStatusCards = ({ stats, onCardClick }) => {
               fontSize: '15px'
             }}
           >
-            {card.title}: {card.count}건
+            {card.title}: {card.count}
           </Typography>
         </Box>
       ))}

@@ -11,9 +11,9 @@ bp = Blueprint('articles', __name__, url_prefix='/api/articles')
 
 @bp.route('/', methods=['GET'])
 def get_articles():
-    """기사 목록 조회 (리스크 관리 필터 포함)"""
+    """Get article list with risk management filters"""
     try:
-        # 쿼리 파라미터
+        # Query parameters
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         category = request.args.get('category', None)
@@ -23,42 +23,42 @@ def get_articles():
         keyword = request.args.get('keyword', None)
         sentiment = request.args.get('sentiment', None)
         needs_response = request.args.get('needs_response', None)
-        # 리스크 관리 필터
+        # Risk management filters
         risk_level = request.args.get('risk_level', None)
         status = request.args.get('status', None)
         assignee_id = request.args.get('assignee_id', None, type=int)
         exclude_resolved = request.args.get('exclude_resolved', None)
 
-        # 기본 쿼리: 해시드 관련 기사만
+        # Base query: Hashed-related articles only
         query = Article.query.filter_by(is_medical=True)
 
-        # 카테고리 필터
+        # Category filter
         if category:
             query = query.filter_by(category=category)
 
-        # 언론사 필터
+        # Source filter
         if source:
             query = query.filter(Article.source.ilike(f'%{source}%'))
 
-        # 날짜 필터 (시작)
+        # Date filter (start)
         if date_from:
             try:
                 date_obj = datetime.fromisoformat(date_from)
                 query = query.filter(Article.published_date >= date_obj)
             except ValueError:
-                return jsonify({'error': '잘못된 날짜 형식 (date_from)'}), 400
+                return jsonify({'error': 'Invalid date format (date_from)'}), 400
 
-        # 날짜 필터 (종료)
+        # Date filter (end)
         if date_to:
             try:
                 date_obj = datetime.fromisoformat(date_to)
-                # 해당 날짜의 끝까지 포함
+                # Include until end of the day
                 date_obj = date_obj + timedelta(days=1)
                 query = query.filter(Article.published_date < date_obj)
             except ValueError:
-                return jsonify({'error': '잘못된 날짜 형식 (date_to)'}), 400
+                return jsonify({'error': 'Invalid date format (date_to)'}), 400
 
-        # 키워드 필터 (제목 또는 설명에서 검색)
+        # Keyword filter (search in title or description)
         if keyword:
             search_pattern = f"%{keyword}%"
             query = query.filter(
@@ -68,31 +68,31 @@ def get_articles():
                 )
             )
 
-        # 감성 필터
+        # Sentiment filter
         if sentiment:
             query = query.filter(Article.sentiment == sentiment)
 
-        # PR 대응 필요 필터
+        # PR response needed filter
         if needs_response:
             query = query.filter(Article.needs_response == True)
 
-        # 리스크 레벨 필터
+        # Risk level filter
         if risk_level:
             query = query.filter(Article.risk_level == risk_level)
 
-        # 상태 필터
+        # Status filter
         if status:
             query = query.filter(Article.status == status)
 
-        # 담당자 필터
+        # Assignee filter
         if assignee_id:
             query = query.filter(Article.assignee_id == assignee_id)
 
-        # 대응 완료 제외 필터
+        # Exclude resolved filter
         if exclude_resolved:
             query = query.filter(Article.status != 'resolved')
 
-        # 최신순 정렬 (리스크 레벨 우선)
+        # Sort by latest (risk level priority)
         query = query.order_by(
             db.case(
                 (Article.risk_level == 'red', 1),
@@ -103,7 +103,7 @@ def get_articles():
             Article.published_date.desc()
         )
 
-        # 페이지네이션
+        # Pagination
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         articles = [article.to_dict() for article in pagination.items]
@@ -117,12 +117,12 @@ def get_articles():
         })
 
     except Exception as e:
-        logger.error(f"기사 조회 중 오류: {e}")
-        return jsonify({'error': '기사 조회 실패'}), 500
+        logger.error(f"Error fetching articles: {e}")
+        return jsonify({'error': 'Failed to fetch articles'}), 500
 
 @bp.route('/today', methods=['GET'])
 def get_today_articles():
-    """오늘의 의료 기사 조회"""
+    """Get today's articles"""
     try:
         today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         tomorrow = today + timedelta(days=1)
@@ -141,12 +141,12 @@ def get_today_articles():
         })
 
     except Exception as e:
-        logger.error(f"오늘 기사 조회 중 오류: {e}")
-        return jsonify({'error': '기사 조회 실패'}), 500
+        logger.error(f"Error fetching today's articles: {e}")
+        return jsonify({'error': 'Failed to fetch articles'}), 500
 
 @bp.route('/categories', methods=['GET'])
 def get_categories():
-    """사용 가능한 카테고리 목록 조회"""
+    """Get available category list"""
     try:
         categories = db.session.query(Article.category).filter(
             Article.is_medical == True,
@@ -160,12 +160,12 @@ def get_categories():
         })
 
     except Exception as e:
-        logger.error(f"카테고리 조회 중 오류: {e}")
-        return jsonify({'error': '카테고리 조회 실패'}), 500
+        logger.error(f"Error fetching categories: {e}")
+        return jsonify({'error': 'Failed to fetch categories'}), 500
 
 @bp.route('/stats', methods=['GET'])
 def get_stats():
-    """통계 정보 조회"""
+    """Get statistics"""
     try:
         total_articles = Article.query.filter_by(is_medical=True).count()
 
@@ -178,7 +178,7 @@ def get_stats():
             Article.published_date < tomorrow
         ).count()
 
-        # 카테고리별 통계
+        # Category statistics
         category_stats = db.session.query(
             Article.category,
             db.func.count(Article.id)
@@ -186,9 +186,9 @@ def get_stats():
             Article.is_medical == True
         ).group_by(Article.category).all()
 
-        category_counts = {(cat if cat else '미분류'): count for cat, count in category_stats}
+        category_counts = {(cat if cat else 'Uncategorized'): count for cat, count in category_stats}
 
-        # 감성별 통계
+        # Sentiment statistics
         sentiment_stats = db.session.query(
             Article.sentiment,
             db.func.count(Article.id)
@@ -196,9 +196,9 @@ def get_stats():
             Article.is_medical == True
         ).group_by(Article.sentiment).all()
 
-        sentiment_counts = {(sent if sent else '미분류'): count for sent, count in sentiment_stats}
+        sentiment_counts = {(sent if sent else 'Uncategorized'): count for sent, count in sentiment_stats}
 
-        # PR 대응 필요 기사 수
+        # PR response needed count
         needs_response_count = Article.query.filter(
             Article.is_medical == True,
             Article.needs_response == True
@@ -214,33 +214,33 @@ def get_stats():
 
     except Exception as e:
         import traceback
-        logger.error(f"통계 조회 중 오류: {e}")
+        logger.error(f"Error fetching stats: {e}")
         logger.error(traceback.format_exc())
-        return jsonify({'error': '통계 조회 실패'}), 500
+        return jsonify({'error': 'Failed to fetch stats'}), 500
 
 @bp.route('/<int:article_id>', methods=['GET'])
 def get_article(article_id):
-    """특정 기사 상세 조회"""
+    """Get specific article details"""
     try:
         article = Article.query.get(article_id)
 
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
         return jsonify(article.to_dict())
 
     except Exception as e:
-        logger.error(f"기사 상세 조회 중 오류: {e}")
-        return jsonify({'error': '기사 조회 실패'}), 500
+        logger.error(f"Error fetching article details: {e}")
+        return jsonify({'error': 'Failed to fetch article'}), 500
 
 
-# ========== 리스크 관리 엔드포인트 ==========
+# ========== Risk Management Endpoints ==========
 
 @bp.route('/dashboard-stats', methods=['GET'])
 def get_dashboard_stats():
-    """대시보드용 리스크 통계"""
+    """Dashboard risk statistics"""
     try:
-        # 리스크 레벨별 카운트
+        # Count by risk level
         red_count = Article.query.filter(
             Article.is_medical == True,
             Article.risk_level == 'red',
@@ -263,7 +263,7 @@ def get_dashboard_stats():
             Article.status == 'resolved'
         ).count()
 
-        # 상태별 카운트
+        # Count by status
         pending_count = Article.query.filter(
             Article.is_medical == True,
             Article.status == 'pending'
@@ -274,7 +274,7 @@ def get_dashboard_stats():
             Article.status == 'reviewing'
         ).count()
 
-        # 최근 7일 추이
+        # Recent 7 days trend
         week_ago = datetime.utcnow() - timedelta(days=7)
         recent_critical = Article.query.filter(
             Article.is_medical == True,
@@ -297,13 +297,13 @@ def get_dashboard_stats():
         })
 
     except Exception as e:
-        logger.error(f"대시보드 통계 조회 중 오류: {e}")
-        return jsonify({'error': '통계 조회 실패'}), 500
+        logger.error(f"Error fetching dashboard stats: {e}")
+        return jsonify({'error': 'Failed to fetch stats'}), 500
 
 
 @bp.route('/critical', methods=['GET'])
 def get_critical_articles():
-    """심각 리스크 기사만 조회 (red 레벨)"""
+    """Get critical risk articles only (red level)"""
     try:
         articles = Article.query.filter(
             Article.is_medical == True,
@@ -317,29 +317,29 @@ def get_critical_articles():
         })
 
     except Exception as e:
-        logger.error(f"심각 기사 조회 중 오류: {e}")
-        return jsonify({'error': '기사 조회 실패'}), 500
+        logger.error(f"Error fetching critical articles: {e}")
+        return jsonify({'error': 'Failed to fetch articles'}), 500
 
 
 @bp.route('/<int:article_id>/status', methods=['PATCH'])
 @token_required
 def update_article_status(current_user, article_id):
-    """기사 상태 변경"""
+    """Update article status"""
     try:
         article = Article.query.get(article_id)
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
         data = request.get_json()
         new_status = data.get('status')
 
         valid_statuses = ['pending', 'reviewing', 'resolved', 'ignored']
         if new_status not in valid_statuses:
-            return jsonify({'error': f'유효하지 않은 상태입니다. 허용: {valid_statuses}'}), 400
+            return jsonify({'error': f'Invalid status. Allowed: {valid_statuses}'}), 400
 
         article.status = new_status
 
-        # 대응 완료 시 추가 정보 저장
+        # Save additional info when resolved
         if new_status == 'resolved':
             article.resolved_at = datetime.utcnow()
             article.resolved_by_id = current_user.id
@@ -347,54 +347,54 @@ def update_article_status(current_user, article_id):
         db.session.commit()
 
         return jsonify({
-            'message': '상태가 변경되었습니다',
+            'message': 'Status updated',
             'article': article.to_dict()
         })
 
     except Exception as e:
-        logger.error(f"상태 변경 중 오류: {e}")
+        logger.error(f"Error updating status: {e}")
         db.session.rollback()
-        return jsonify({'error': '상태 변경 실패'}), 500
+        return jsonify({'error': 'Failed to update status'}), 500
 
 
 @bp.route('/<int:article_id>/risk-level', methods=['PATCH'])
 @token_required
 def update_risk_level(current_user, article_id):
-    """기사 리스크 레벨 변경"""
+    """Update article risk level"""
     try:
         article = Article.query.get(article_id)
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
         data = request.get_json()
         new_level = data.get('risk_level')
 
         valid_levels = ['red', 'amber', 'green']
         if new_level not in valid_levels:
-            return jsonify({'error': f'유효하지 않은 리스크 레벨입니다. 허용: {valid_levels}'}), 400
+            return jsonify({'error': f'Invalid risk level. Allowed: {valid_levels}'}), 400
 
         article.risk_level = new_level
         db.session.commit()
 
         return jsonify({
-            'message': '리스크 레벨이 변경되었습니다',
+            'message': 'Risk level updated',
             'article': article.to_dict()
         })
 
     except Exception as e:
-        logger.error(f"리스크 레벨 변경 중 오류: {e}")
+        logger.error(f"Error updating risk level: {e}")
         db.session.rollback()
-        return jsonify({'error': '리스크 레벨 변경 실패'}), 500
+        return jsonify({'error': 'Failed to update risk level'}), 500
 
 
 @bp.route('/<int:article_id>/assignee', methods=['PATCH'])
 @token_required
 def update_assignee(current_user, article_id):
-    """기사 담당자 지정"""
+    """Assign article to user"""
     try:
         article = Article.query.get(article_id)
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
         data = request.get_json()
         assignee_id = data.get('assignee_id')
@@ -402,36 +402,36 @@ def update_assignee(current_user, article_id):
         if assignee_id:
             assignee = User.query.get(assignee_id)
             if not assignee:
-                return jsonify({'error': '담당자를 찾을 수 없습니다'}), 404
+                return jsonify({'error': 'Assignee not found'}), 404
             article.assignee_id = assignee_id
         else:
             article.assignee_id = None
 
-        # 담당자 지정 시 자동으로 reviewing 상태로 변경
+        # Auto change to reviewing status when assigned
         if assignee_id and article.status == 'pending':
             article.status = 'reviewing'
 
         db.session.commit()
 
         return jsonify({
-            'message': '담당자가 지정되었습니다',
+            'message': 'Assignee updated',
             'article': article.to_dict()
         })
 
     except Exception as e:
-        logger.error(f"담당자 지정 중 오류: {e}")
+        logger.error(f"Error updating assignee: {e}")
         db.session.rollback()
-        return jsonify({'error': '담당자 지정 실패'}), 500
+        return jsonify({'error': 'Failed to update assignee'}), 500
 
 
 @bp.route('/<int:article_id>/action-items', methods=['PATCH'])
 @token_required
 def update_action_items(current_user, article_id):
-    """액션 아이템 체크 상태 업데이트"""
+    """Update action item check status"""
     try:
         article = Article.query.get(article_id)
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
         data = request.get_json()
         action_items = data.get('action_items')
@@ -441,21 +441,21 @@ def update_action_items(current_user, article_id):
             db.session.commit()
 
         return jsonify({
-            'message': '액션 아이템이 업데이트되었습니다',
+            'message': 'Action items updated',
             'article': article.to_dict()
         })
 
     except Exception as e:
-        logger.error(f"액션 아이템 업데이트 중 오류: {e}")
+        logger.error(f"Error updating action items: {e}")
         db.session.rollback()
-        return jsonify({'error': '액션 아이템 업데이트 실패'}), 500
+        return jsonify({'error': 'Failed to update action items'}), 500
 
 
 @bp.route('/workflow-stats', methods=['GET'])
 def get_workflow_stats():
-    """팀 워크플로우 통계 (담당자별)"""
+    """Team workflow statistics (by assignee)"""
     try:
-        # 담당자별 진행 중 기사 수
+        # Articles in progress by assignee
         workflow_stats = db.session.query(
             User.id,
             User.name,
@@ -476,7 +476,7 @@ def get_workflow_stats():
                 'assigned_count': count
             })
 
-        # 미할당 기사 수
+        # Unassigned article count
         unassigned_count = Article.query.filter(
             Article.is_medical == True,
             Article.assignee_id.is_(None),
@@ -489,27 +489,27 @@ def get_workflow_stats():
         })
 
     except Exception as e:
-        logger.error(f"워크플로우 통계 조회 중 오류: {e}")
-        return jsonify({'error': '통계 조회 실패'}), 500
+        logger.error(f"Error fetching workflow stats: {e}")
+        return jsonify({'error': 'Failed to fetch stats'}), 500
 
 
-# ========== AI 분석 엔드포인트 ==========
+# ========== AI Analysis Endpoints ==========
 
 @bp.route('/<int:article_id>/ai-analyze', methods=['POST'])
 @token_required
 def analyze_article_ai(current_user, article_id):
-    """AI 분석 실행"""
+    """Run AI analysis"""
     try:
         from app.services.ai_service import full_ai_analysis
 
         article = Article.query.get(article_id)
         if not article:
-            return jsonify({'error': '기사를 찾을 수 없습니다'}), 404
+            return jsonify({'error': 'Article not found'}), 404
 
-        # AI 분석 수행
+        # Perform AI analysis
         analysis_result = full_ai_analysis(article)
 
-        # 결과 저장
+        # Save results
         article.ai_summary = analysis_result['ai_summary']
         article.risk_level = analysis_result['risk_level']
         article.risk_score = analysis_result['risk_score']
@@ -520,20 +520,20 @@ def analyze_article_ai(current_user, article_id):
         db.session.commit()
 
         return jsonify({
-            'message': 'AI 분석이 완료되었습니다',
+            'message': 'AI analysis completed',
             'article': article.to_dict()
         })
 
     except Exception as e:
-        logger.error(f"AI 분석 중 오류: {e}")
+        logger.error(f"Error during AI analysis: {e}")
         db.session.rollback()
-        return jsonify({'error': 'AI 분석 실패'}), 500
+        return jsonify({'error': 'AI analysis failed'}), 500
 
 
 @bp.route('/batch-analyze', methods=['POST'])
 @token_required
 def batch_analyze_articles(current_user):
-    """여러 기사 일괄 AI 분석"""
+    """Batch AI analysis for multiple articles"""
     try:
         from app.services.ai_service import full_ai_analysis
 
@@ -541,7 +541,7 @@ def batch_analyze_articles(current_user):
         article_ids = data.get('article_ids', [])
 
         if not article_ids:
-            # 분석되지 않은 기사들 자동 선택
+            # Auto-select unanalyzed articles
             articles = Article.query.filter(
                 Article.is_medical == True,
                 Article.ai_summary.is_(None)
@@ -567,11 +567,11 @@ def batch_analyze_articles(current_user):
         db.session.commit()
 
         return jsonify({
-            'message': f'{len([r for r in results if r["status"] == "success"])}개 기사 분석 완료',
+            'message': f'{len([r for r in results if r["status"] == "success"])} articles analyzed',
             'results': results
         })
 
     except Exception as e:
-        logger.error(f"일괄 AI 분석 중 오류: {e}")
+        logger.error(f"Error during batch AI analysis: {e}")
         db.session.rollback()
-        return jsonify({'error': '일괄 분석 실패'}), 500
+        return jsonify({'error': 'Batch analysis failed'}), 500

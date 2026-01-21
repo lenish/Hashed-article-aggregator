@@ -30,12 +30,12 @@ const FilterSidebar = ({
   return (
     <Box sx={{ height: '100%' }}>
       <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-        필터 및 검색
+        Filters & Search
       </Typography>
 
-      {/* 고급 옵션 */}
+      {/* Advanced options */}
       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        고급 옵션
+        Advanced Options
       </Typography>
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <Select
@@ -48,14 +48,14 @@ const FilterSidebar = ({
             }
           }}
         >
-          <MenuItem value="title">가치 검색</MenuItem>
-          <MenuItem value="keyword">키워드 검색</MenuItem>
+          <MenuItem value="title">Title Search</MenuItem>
+          <MenuItem value="keyword">Keyword Search</MenuItem>
         </Select>
       </FormControl>
 
-      {/* 카테고리 */}
+      {/* Category */}
       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        카테고리
+        Category
       </Typography>
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <Select
@@ -69,16 +69,16 @@ const FilterSidebar = ({
             }
           }}
         >
-          <MenuItem value="">전체</MenuItem>
+          <MenuItem value="">All</MenuItem>
           {categories?.map((cat) => (
             <MenuItem key={cat} value={cat}>{cat}</MenuItem>
           ))}
         </Select>
       </FormControl>
 
-      {/* 날짜 */}
+      {/* Date */}
       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        날짜
+        Date
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
         <TextField
@@ -112,16 +112,16 @@ const FilterSidebar = ({
         />
       </Box>
 
-      {/* 키워드 */}
+      {/* Keyword */}
       <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-        키워드
+        Keyword
       </Typography>
       <TextField
         fullWidth
         size="small"
         value={filters.keyword || ''}
         onChange={handleChange('keyword')}
-        placeholder="키워드, 타이틀 등"
+        placeholder="Keyword, title, etc."
         sx={{
           mb: 3,
           '& .MuiOutlinedInput-root': {
@@ -131,7 +131,7 @@ const FilterSidebar = ({
         }}
       />
 
-      {/* AI 분석 버튼 */}
+      {/* AI Analysis button */}
       <Button
         variant="contained"
         fullWidth
@@ -146,7 +146,7 @@ const FilterSidebar = ({
           }
         }}
       >
-        {isAnalyzing ? 'AI 분석 중...' : 'AI 분석 시작'}
+        {isAnalyzing ? 'Analyzing...' : 'Start AI Analysis'}
       </Button>
     </Box>
   );

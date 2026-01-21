@@ -10,7 +10,6 @@ import {
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
 
 const getRiskLevelConfig = (level) => {
   const configs = {
@@ -51,13 +50,13 @@ const NewsFeedCard = ({
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      return format(new Date(dateString), 'yyyy.MM.dd', { locale: ko });
+      return format(new Date(dateString), 'MMM dd, yyyy');
     } catch {
       return dateString;
     }
   };
 
-  // 키워드 추출 (Key entities)
+  // Extract key entities
   const keyEntities = article.keywords?.slice(0, 3) || [];
 
   return (
@@ -78,7 +77,7 @@ const NewsFeedCard = ({
       onClick={() => onViewStrategy && onViewStrategy(article)}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        {/* 상단: 리스크 레벨 태그 + 더보기 */}
+        {/* Top: Risk level tag + more options */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Chip
             icon={
@@ -110,7 +109,7 @@ const NewsFeedCard = ({
           </IconButton>
         </Box>
 
-        {/* 제목 */}
+        {/* Title */}
         <Typography
           variant="subtitle1"
           sx={{
@@ -127,7 +126,7 @@ const NewsFeedCard = ({
           {article.title}
         </Typography>
 
-        {/* AI 요약 또는 설명 */}
+        {/* AI Summary or description */}
         <Typography
           variant="body2"
           sx={{
@@ -142,7 +141,7 @@ const NewsFeedCard = ({
           }}
         >
           <Typography component="span" sx={{ color: 'primary.light', fontWeight: 500 }}>
-            AI 요약:
+            AI Summary:
           </Typography>{' '}
           {article.ai_summary || article.description}
         </Typography>
@@ -155,7 +154,7 @@ const NewsFeedCard = ({
           </Typography>
         )}
 
-        {/* 액션 버튼들 */}
+        {/* Action buttons */}
         <Box sx={{ display: 'flex', gap: 1 }} onClick={(e) => e.stopPropagation()}>
           <Button
             variant="contained"
@@ -169,7 +168,7 @@ const NewsFeedCard = ({
               '&:hover': { bgcolor: '#16a34a' }
             }}
           >
-            대응 가이드 보기
+            View Strategy
           </Button>
           <Button
             variant="outlined"
@@ -182,7 +181,7 @@ const NewsFeedCard = ({
               px: 2
             }}
           >
-            상태 변경
+            Status
           </Button>
           <Button
             variant="outlined"
@@ -195,7 +194,7 @@ const NewsFeedCard = ({
               px: 2
             }}
           >
-            공유
+            Share
           </Button>
         </Box>
       </CardContent>
