@@ -62,19 +62,19 @@ class NewsCollector:
 
     def collect_medical_articles(self, max_articles: int = 100) -> List[Dict]:
         """
-        의료 관련 기사 수집 (여러 키워드 사용)
+        해시드 관련 기사 수집 (여러 키워드 사용)
 
         Args:
             max_articles: 수집할 최대 기사 수
 
         Returns:
-            의료 관련 기사 목록
+            해시드 관련 기사 목록
         """
-        medical_queries = ['의료', '병원', '건강', '질병', '치료', '신약']
+        search_queries = ['해시드', 'Hashed', '해시드 벤처스', '김서준']
         all_articles = []
-        articles_per_query = max_articles // len(medical_queries)
+        articles_per_query = max_articles // len(search_queries)
 
-        for query in medical_queries:
+        for query in search_queries:
             articles = self.collect_articles(query=query, display=min(articles_per_query, 100))
             all_articles.extend(articles)
 
