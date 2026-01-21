@@ -16,8 +16,8 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<LoginPage />} />
+        {/* Temporarily redirect login to home */}
+        <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         {/* Main Routes - Auth temporarily disabled */}

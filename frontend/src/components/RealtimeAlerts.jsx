@@ -22,22 +22,22 @@ import { ko } from 'date-fns/locale';
 const getAlertIcon = (level) => {
   switch (level) {
     case 'red':
-      return <ErrorIcon sx={{ color: '#dc3545' }} />;
+      return <ErrorIcon sx={{ color: '#ef4444' }} />;
     case 'amber':
-      return <WarningIcon sx={{ color: '#ffc107' }} />;
+      return <WarningIcon sx={{ color: '#f59e0b' }} />;
     default:
-      return <InfoIcon sx={{ color: '#17a2b8' }} />;
+      return <InfoIcon sx={{ color: '#22c55e' }} />;
   }
 };
 
 const getAlertColor = (level) => {
   switch (level) {
     case 'red':
-      return { bg: 'rgba(220, 53, 69, 0.1)', border: '#dc3545' };
+      return { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444', text: '#fca5a5' };
     case 'amber':
-      return { bg: 'rgba(255, 193, 7, 0.1)', border: '#ffc107' };
+      return { bg: 'rgba(245, 158, 11, 0.15)', border: '#f59e0b', text: '#fcd34d' };
     default:
-      return { bg: 'rgba(23, 162, 184, 0.1)', border: '#17a2b8' };
+      return { bg: 'rgba(34, 197, 94, 0.15)', border: '#22c55e', text: '#86efac' };
   }
 };
 
@@ -58,7 +58,9 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
       elevation={0}
       sx={{
         borderRadius: 2,
-        border: '1px solid #e0e0e0',
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
         height: '100%',
         display: 'flex',
         flexDirection: 'column'
@@ -68,7 +70,8 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
       <Box
         sx={{
           p: 2,
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -76,13 +79,13 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Badge badgeContent={unreadCount} color="error">
-            <NotificationsActiveIcon color="primary" />
+            <NotificationsActiveIcon sx={{ color: 'primary.light' }} />
           </Badge>
-          <Typography variant="subtitle1" fontWeight={600}>
+          <Typography variant="subtitle1" fontWeight={600} color="text.primary">
             실시간 알림
           </Typography>
         </Box>
-        <IconButton size="small" onClick={onRefresh}>
+        <IconButton size="small" onClick={onRefresh} sx={{ color: 'text.secondary' }}>
           <RefreshIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -111,7 +114,8 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
                 <ListItem
                   key={alert.id || index}
                   sx={{
-                    borderBottom: '1px solid #f0f0f0',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
                     bgcolor: alert.read ? 'transparent' : colors.bg,
                     borderLeft: `3px solid ${colors.border}`,
                     cursor: 'pointer',
@@ -130,6 +134,7 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
                         variant="body2"
                         sx={{
                           fontWeight: alert.read ? 400 : 600,
+                          color: 'text.primary',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
@@ -147,8 +152,9 @@ const RealtimeAlerts = ({ alerts = [], onRefresh, onAlertClick }) => {
                           sx={{
                             height: 18,
                             fontSize: '10px',
-                            bgcolor: colors.border,
-                            color: '#fff'
+                            bgcolor: colors.bg,
+                            color: colors.text,
+                            border: `1px solid ${colors.border}`
                           }}
                         />
                         <Typography variant="caption" color="text.secondary">

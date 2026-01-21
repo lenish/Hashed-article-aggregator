@@ -94,7 +94,7 @@ logger.info(f"스케줄러 시작: 매일 {collection_time}에 기사 수집")
 
 if __name__ == '__main__':
     try:
-        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get('PORT', 5001))
         app.run(host='0.0.0.0', port=port, debug=app.config['DEBUG'])
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()

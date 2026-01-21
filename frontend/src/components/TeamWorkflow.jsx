@@ -28,7 +28,9 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
       elevation={0}
       sx={{
         borderRadius: 2,
-        border: '1px solid #e0e0e0',
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
         height: '100%',
         display: 'flex',
         flexDirection: 'column'
@@ -38,20 +40,21 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
       <Box
         sx={{
           p: 2,
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
           display: 'flex',
           alignItems: 'center',
           gap: 1
         }}
       >
-        <GroupIcon color="primary" />
-        <Typography variant="subtitle1" fontWeight={600}>
+        <GroupIcon sx={{ color: 'primary.light' }} />
+        <Typography variant="subtitle1" fontWeight={600} color="text.primary">
           팀 워크플로우
         </Typography>
       </Box>
 
       {/* Summary Stats */}
-      <Box sx={{ px: 2, py: 1.5, bgcolor: '#f8f9fa' }}>
+      <Box sx={{ px: 2, py: 1.5, bgcolor: 'background.default' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Typography variant="caption" color="text.secondary">
             전체 진행 중 ({totalTasks}건)
@@ -66,10 +69,10 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
           sx={{
             height: 6,
             borderRadius: 3,
-            bgcolor: '#e0e0e0',
+            bgcolor: 'rgba(255,255,255,0.1)',
             '& .MuiLinearProgress-bar': {
               borderRadius: 3,
-              background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
+              background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)'
             }
           }}
         />
@@ -98,13 +101,13 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
               <>
                 <ListItem>
                   <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: '#e0e0e0', width: 36, height: 36 }}>
-                      <AssignmentIcon sx={{ fontSize: 18, color: '#666' }} />
+                    <Avatar sx={{ bgcolor: 'rgba(245, 158, 11, 0.2)', width: 36, height: 36 }}>
+                      <AssignmentIcon sx={{ fontSize: 18, color: '#fcd34d' }} />
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight={500}>
+                      <Typography variant="body2" fontWeight={500} color="text.primary">
                         미할당
                       </Typography>
                     }
@@ -117,11 +120,15 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                   <Chip
                     label={`${unassignedCount}건`}
                     size="small"
-                    color="warning"
-                    sx={{ fontWeight: 600 }}
+                    sx={{
+                      fontWeight: 600,
+                      bgcolor: 'rgba(245, 158, 11, 0.2)',
+                      color: '#fcd34d',
+                      border: '1px solid #f59e0b'
+                    }}
                   />
                 </ListItem>
-                <Divider variant="inset" component="li" />
+                <Divider variant="inset" component="li" sx={{ borderColor: 'divider' }} />
               </>
             )}
 
@@ -137,14 +144,14 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                         sx={{ width: 36, height: 36 }}
                       />
                     ) : (
-                      <Avatar sx={{ bgcolor: '#667eea', width: 36, height: 36 }}>
+                      <Avatar sx={{ bgcolor: '#6366f1', width: 36, height: 36 }}>
                         <PersonIcon sx={{ fontSize: 18 }} />
                       </Avatar>
                     )}
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight={500}>
+                      <Typography variant="body2" fontWeight={500} color="text.primary">
                         {item.name}
                       </Typography>
                     }
@@ -156,7 +163,7 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                           sx={{
                             height: 4,
                             borderRadius: 2,
-                            bgcolor: '#e0e0e0',
+                            bgcolor: 'rgba(255,255,255,0.1)',
                             width: '80%'
                           }}
                         />
@@ -166,13 +173,17 @@ const TeamWorkflow = ({ workflowStats, users = [] }) => {
                   <Chip
                     label={`${item.assigned_count}건`}
                     size="small"
-                    color="primary"
-                    variant="outlined"
-                    sx={{ fontWeight: 600 }}
+                    sx={{
+                      fontWeight: 600,
+                      bgcolor: 'transparent',
+                      color: 'primary.light',
+                      border: '1px solid',
+                      borderColor: 'primary.main'
+                    }}
                   />
                 </ListItem>
                 {index < byAssignee.length - 1 && (
-                  <Divider variant="inset" component="li" />
+                  <Divider variant="inset" component="li" sx={{ borderColor: 'divider' }} />
                 )}
               </React.Fragment>
             ))}

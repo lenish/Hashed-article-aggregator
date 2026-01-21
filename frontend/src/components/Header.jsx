@@ -6,46 +6,27 @@ import {
   Box,
   IconButton,
   Avatar,
-  Menu,
-  MenuItem,
   Badge,
-  Tooltip,
-  Divider
+  Tooltip
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 function Header() {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = async () => {
-    handleClose();
-    await logout();
-    navigate('/login');
-  };
 
   return (
     <AppBar
       position="static"
+      elevation={0}
       sx={{
-        backgroundColor: '#1a1a2e',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        backgroundColor: 'background.paper',
+        borderBottom: '1px solid',
+        borderColor: 'divider'
       }}
     >
-      <Toolbar sx={{ minHeight: '64px !important' }}>
+      <Toolbar sx={{ minHeight: '56px !important', px: 3 }}>
         {/* Logo */}
         <Box
           sx={{
@@ -55,120 +36,73 @@ function Header() {
           }}
           onClick={() => navigate('/')}
         >
-          <Box
+          {/* #HASHED 텍스트 로고 */}
+          <Typography
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mr: 1.5
+              fontWeight: 900,
+              fontSize: '18px',
+              fontStyle: 'italic',
+              color: 'text.primary',
+              letterSpacing: '-0.5px',
+              mr: 0.5
             }}
           >
-            <Typography
-              sx={{
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '18px'
-              }}
-            >
-              H
-            </Typography>
-          </Box>
-          <Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                lineHeight: 1.1,
-                fontSize: '16px'
-              }}
-            >
-              Hashed Risk Manager
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                opacity: 0.7,
-                fontSize: '10px',
-                display: 'block'
-              }}
-            >
-              AI 리스크 모니터링 & 대응
-            </Typography>
-          </Box>
+            #
+          </Typography>
+          <Typography
+            sx={{
+              fontWeight: 900,
+              fontSize: '18px',
+              fontStyle: 'italic',
+              color: 'text.primary',
+              letterSpacing: '-0.5px'
+            }}
+          >
+            HASHED
+          </Typography>
+          <Typography
+            sx={{
+              ml: 1.5,
+              fontSize: '13px',
+              color: 'text.secondary',
+              fontWeight: 500
+            }}
+          >
+            Risk Manager
+          </Typography>
         </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 
         {/* Right Side Icons */}
-        {isAuthenticated && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title="알림">
-              <IconButton color="inherit">
-                <Badge badgeContent={0} color="error">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Tooltip title="알림">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <Badge badgeContent={3} color="error" variant="dot">
+                <NotificationsIcon fontSize="small" />
+              </Badge>
+            </IconButton>
+          </Tooltip>
 
-            <Tooltip title="도움말">
-              <IconButton color="inherit">
-                <HelpOutlineIcon />
-              </IconButton>
-            </Tooltip>
+          <Tooltip title="도움말">
+            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
 
-            {/* User Menu */}
-            <Tooltip title={user?.name || '프로필'}>
-              <IconButton
-                onClick={handleMenu}
-                sx={{ ml: 1 }}
-              >
-                {user?.picture ? (
-                  <Avatar
-                    src={user.picture}
-                    alt={user.name}
-                    sx={{ width: 32, height: 32 }}
-                  />
-                ) : (
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#667eea' }}>
-                    {user?.name?.charAt(0) || 'U'}
-                  </Avatar>
-                )}
-              </IconButton>
-            </Tooltip>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-            >
-              <Box sx={{ px: 2, py: 1 }}>
-                <Typography variant="subtitle2" fontWeight={600}>
-                  {user?.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {user?.email}
-                </Typography>
-              </Box>
-              <Divider />
-              <MenuItem onClick={handleLogout}>
-                <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
-                로그아웃
-              </MenuItem>
-            </Menu>
-          </Box>
-        )}
+          <Avatar
+            sx={{
+              width: 28,
+              height: 28,
+              ml: 1,
+              bgcolor: '#6366f1',
+              fontSize: '12px',
+              fontWeight: 600
+            }}
+          >
+            H
+          </Avatar>
+        </Box>
       </Toolbar>
     </AppBar>
   );

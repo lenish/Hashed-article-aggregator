@@ -6,48 +6,37 @@ import {
   Typography,
   Chip,
   Button,
-  IconButton,
-  Tooltip
+  IconButton
 } from '@mui/material';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import ShareIcon from '@mui/icons-material/Share';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 const getRiskLevelConfig = (level) => {
   const configs = {
     red: {
-      color: '#dc3545',
-      bgColor: 'rgba(220, 53, 69, 0.1)',
+      color: '#fca5a5',
+      bgColor: 'rgba(239, 68, 68, 0.2)',
+      borderColor: '#ef4444',
       label: 'Red',
-      borderColor: '#dc3545'
+      dotColor: '#ef4444'
     },
     amber: {
-      color: '#ffc107',
-      bgColor: 'rgba(255, 193, 7, 0.1)',
+      color: '#fcd34d',
+      bgColor: 'rgba(245, 158, 11, 0.2)',
+      borderColor: '#f59e0b',
       label: 'Amber',
-      borderColor: '#ffc107'
+      dotColor: '#f59e0b'
     },
     green: {
-      color: '#28a745',
-      bgColor: 'rgba(40, 167, 69, 0.1)',
+      color: '#86efac',
+      bgColor: 'rgba(34, 197, 94, 0.2)',
+      borderColor: '#22c55e',
       label: 'Green',
-      borderColor: '#28a745'
+      dotColor: '#22c55e'
     }
   };
   return configs[level] || configs.green;
-};
-
-const getStatusConfig = (status) => {
-  const configs = {
-    pending: { color: 'default', label: '대기 중' },
-    reviewing: { color: 'primary', label: '검토 중' },
-    resolved: { color: 'success', label: '완료' },
-    ignored: { color: 'default', label: '무시' }
-  };
-  return configs[status] || configs.pending;
 };
 
 const NewsFeedCard = ({
@@ -55,80 +44,70 @@ const NewsFeedCard = ({
   onViewStrategy,
   onStatusChange,
   onShare,
-  onAssign,
   selected
 }) => {
   const riskConfig = getRiskLevelConfig(article.risk_level);
-  const statusConfig = getStatusConfig(article.status);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      return format(new Date(dateString), 'yyyy.MM.dd HH:mm', { locale: ko });
+      return format(new Date(dateString), 'yyyy.MM.dd', { locale: ko });
     } catch {
       return dateString;
     }
   };
 
+  // 키워드 추출 (Key entities)
+  const keyEntities = article.keywords?.slice(0, 3) || [];
+
   return (
     <Card
       sx={{
         mb: 2,
-        borderRadius: 2,
-        border: `2px solid ${selected ? riskConfig.borderColor : 'transparent'}`,
+        bgcolor: selected ? 'rgba(99, 102, 241, 0.1)' : 'background.paper',
+        border: '1px solid',
+        borderColor: selected ? 'primary.main' : 'divider',
         borderLeft: `4px solid ${riskConfig.borderColor}`,
-        background: selected ? riskConfig.bgColor : '#fff',
-        transition: 'all 0.2s ease',
         cursor: 'pointer',
+        transition: 'all 0.2s ease',
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          transform: 'translateX(4px)'
+          borderColor: riskConfig.borderColor,
+          bgcolor: 'rgba(255,255,255,0.02)'
         }
       }}
       onClick={() => onViewStrategy && onViewStrategy(article)}
     >
-      <CardContent sx={{ pb: '12px !important' }}>
-        {/* 상단: 리스크 레벨 + 카테고리 + 상태 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+        {/* 상단: 리스크 레벨 태그 + 더보기 */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Chip
+            icon={
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: riskConfig.dotColor,
+                  ml: 0.5
+                }}
+              />
+            }
             label={riskConfig.label}
             size="small"
             sx={{
-              bgcolor: riskConfig.color,
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '11px'
+              bgcolor: riskConfig.bgColor,
+              color: riskConfig.color,
+              fontWeight: 600,
+              fontSize: '12px',
+              height: 24,
+              '& .MuiChip-icon': {
+                ml: 0.5
+              }
             }}
           />
-          {article.category && (
-            <Chip
-              label={article.category}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '11px' }}
-            />
-          )}
-          <Chip
-            label={statusConfig.label}
-            size="small"
-            color={statusConfig.color}
-            sx={{ fontSize: '11px' }}
-          />
-          {article.assignee && (
-            <Chip
-              label={article.assignee.name}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '11px' }}
-              avatar={
-                <img
-                  src={article.assignee.picture}
-                  alt={article.assignee.name}
-                  style={{ width: 16, height: 16, borderRadius: '50%' }}
-                />
-              }
-            />
-          )}
+          <IconButton size="small" sx={{ color: 'text.secondary' }} onClick={(e) => e.stopPropagation()}>
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
         </Box>
 
         {/* 제목 */}
@@ -138,6 +117,7 @@ const NewsFeedCard = ({
             fontWeight: 600,
             mb: 1,
             lineHeight: 1.4,
+            color: 'text.primary',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -150,90 +130,73 @@ const NewsFeedCard = ({
         {/* AI 요약 또는 설명 */}
         <Typography
           variant="body2"
-          color="text.secondary"
           sx={{
             mb: 1.5,
+            color: 'text.secondary',
+            fontSize: '13px',
+            lineHeight: 1.6,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            lineHeight: 1.5
+            overflow: 'hidden'
           }}
         >
+          <Typography component="span" sx={{ color: 'primary.light', fontWeight: 500 }}>
+            AI 요약:
+          </Typography>{' '}
           {article.ai_summary || article.description}
         </Typography>
 
-        {/* 키워드 태그 */}
-        {article.keywords && article.keywords.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5, flexWrap: 'wrap' }}>
-            {article.keywords.slice(0, 4).map((keyword, idx) => (
-              <Chip
-                key={idx}
-                label={keyword}
-                size="small"
-                sx={{
-                  fontSize: '10px',
-                  height: 20,
-                  bgcolor: '#f0f0f0'
-                }}
-              />
-            ))}
-            {article.keywords.length > 4 && (
-              <Typography variant="caption" color="text.secondary">
-                +{article.keywords.length - 4}
-              </Typography>
-            )}
-          </Box>
+        {/* Key entities */}
+        {keyEntities.length > 0 && (
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+            <Typography component="span" fontWeight={600}>Key entities:</Typography>{' '}
+            {keyEntities.join(', ')}
+          </Typography>
         )}
 
-        {/* 하단: 출처, 날짜, 액션 버튼 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
-              {article.source}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-              {formatDate(article.published_date)}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 0.5 }} onClick={(e) => e.stopPropagation()}>
-            <Tooltip title="대응 가이드 보기">
-              <IconButton
-                size="small"
-                onClick={() => onViewStrategy && onViewStrategy(article)}
-              >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="담당자 지정">
-              <IconButton
-                size="small"
-                onClick={() => onAssign && onAssign(article)}
-              >
-                <PersonAddIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="공유">
-              <IconButton
-                size="small"
-                onClick={() => onShare && onShare(article)}
-              >
-                <ShareIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            <Tooltip title="원문 보기">
-              <IconButton
-                size="small"
-                onClick={() => window.open(article.url, '_blank')}
-              >
-                <OpenInNewIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
+        {/* 액션 버튼들 */}
+        <Box sx={{ display: 'flex', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => onViewStrategy && onViewStrategy(article)}
+            sx={{
+              bgcolor: '#22c55e',
+              color: '#fff',
+              fontSize: '12px',
+              px: 2,
+              '&:hover': { bgcolor: '#16a34a' }
+            }}
+          >
+            대응 가이드 보기
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => onStatusChange && onStatusChange(article)}
+            sx={{
+              borderColor: 'divider',
+              color: 'text.secondary',
+              fontSize: '12px',
+              px: 2
+            }}
+          >
+            상태 변경
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => onShare && onShare(article)}
+            sx={{
+              borderColor: 'divider',
+              color: 'text.secondary',
+              fontSize: '12px',
+              px: 2
+            }}
+          >
+            공유
+          </Button>
         </Box>
       </CardContent>
     </Card>
