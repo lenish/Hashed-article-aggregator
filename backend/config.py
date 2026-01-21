@@ -3,11 +3,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def get_database_url():
+    """DATABASE_URL을 psycopg3 형식으로 변환"""
+    url = os.environ.get('DATABASE_URL')
+    if url:
+        # Render의 postgres:// 를 postgresql+psycopg:// 로 변환
+        if url.startswith('postgres://'):
+            url = url.replace('postgres://', 'postgresql+psycopg://', 1)
+        elif url.startswith('postgresql://'):
+            url = url.replace('postgresql://', 'postgresql+psycopg://', 1)
+        return url
+    return 'sqlite:///hashed_articles.db'
+
 class Config:
     """기본 설정"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///hashed_articles.db'
+    SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Naver News API 설정
