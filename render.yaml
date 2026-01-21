@@ -1,0 +1,27 @@
+databases:
+  - name: hashed-db
+    plan: free
+    databaseName: hashed_articles_db
+    user: hasheduser
+
+services:
+  - type: web
+    name: hashed-article-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hashed-db
+          property: connectionString
+      - key: NAVER_CLIENT_ID
+        sync: false
+      - key: NAVER_CLIENT_SECRET
+        sync: false
